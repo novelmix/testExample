@@ -1,58 +1,36 @@
 # testExample
-### Схема БД в папке DataBase ###
-### 1. Для заданного списка товаров получить названия всех категорий, в которых представлены товары.Выборка для нескольких товаров (пример: ids = (9, 14, 6, 7, 2) ). ###
-### 2. Для заданной категории получить список предложений всех товаров из этой категории. Каждая категория может иметь несколько подкатегорий.Пример:Выбираю все товары из категории компьютеры (id = 2) и подкатегории (id =3 (ноутбуки), id = 4 (планшеты), id = 5 (гибриды) ).
-### 3. Для заданного списка категорий получить количество уникальных товаров в каждой категории.Выборка для нескольких категорий (пример: ids = (2, 3, 4) ).
-### 4. Для заданного списка категорий получить количество единиц каждого товара который входит в указанные категории.Выборка для нескольких категорий (пример: ids = (3, 4, 5) )
-### База данных
+# Схема БД в папці DataBase
+1. Для заданого списку товарів отримати назви всіх категорій, в яких представлені товари.Виборка для кількох товарів (приклад: ids = (9, 14, 6, 7, 2)). 
+2. Для заданої категорії отримати список пропозицій всіх товарів з цієї категорії. Кожна категорія може мати кілька подкатегорій.Прімер:Обираю усі товари з категорії комп'ютери (id = 2) і підкатегорії (id = 3 (ноутбуки), id = 4 (планшети), id = 5 (гібриди)).
+3. Для заданого списку категорій отримати кількість унікальних товарів в кожній категоріі.Виборка для декількох категорій (приклад: ids = (2, 3, 4)).
+4. Для заданого списку категорій отримати кількість одиниць кожного товару який входить в зазначені категоріі.Виборка для декількох категорій (приклад: ids = (3, 4, 5))
 
-CREATE TABLE `products` (
-  `id_product` int(11) NOT NULL COMMENT 'ID',
-  `id_sub_category` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL COMMENT 'Опис'
-)ENGINE=InnoDB DEFAULT CHARSET=utf8;
-CREATE TABLE `product_category` (
-  `id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `category_id` int(11) NOT NULL
-)ENGINE=InnoDB DEFAULT CHARSET=utf8;
-CREATE TABLE `sub_category` (
-  `id_sub_category` int(11) NOT NULL COMMENT 'ID',
-  `name` varchar(255) NOT NULL,
-  `uniqName` varchar(255) DEFAULT NULL,
-  `parent_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-ALTER TABLE `products`
-  ADD PRIMARY KEY (`id_product`),
-  ADD KEY `fk_id_procuct` (`id_sub_category`);
 
--- Індекси таблиці `product_category`
-ALTER TABLE `product_category`
-  ADD PRIMARY KEY (`id`,`product_id`,`category_id`),
-  ADD KEY `fk_product_id` (`product_id`),
-  ADD KEY `fk_product_category_category` (`category_id`);
+### Відповідь ######
 
--- Індекси таблиці `products`
-ALTER TABLE `products`
-  ADD PRIMARY KEY (`id_product`),
-  ADD KEY `fk_id_procuct` (`id_sub_category`);
+1)
+SELECT c.id_sub_category, c.name, p.id_product, p.name FROM sub_category as c </br>
+LEFT JOIN product_category ON product_category.category_id = c.id_sub_category </br>
+LEFT JOIN products as p ON p.id_product = product_category.product_id </br>
+WHERE product_category.product_id IN('4','18','14','6','15') </br>
+ORDER BY p.id_product;</br>
 
--- Індекси таблиці `product_category`
-ALTER TABLE `product_category`
-  ADD PRIMARY KEY (`id`,`product_id`,`category_id`),
-  ADD KEY `fk_product_id` (`product_id`),
-  ADD KEY `fk_product_category_category` (`category_id`);
-  
--- Індекси таблиці `sub_category`
-ALTER TABLE `sub_category`
-  ADD PRIMARY KEY (`id_sub_category`),
-  ADD KEY `fk_sub_category_parent` (`parent_id`);
-  
--- AUTO_INCREMENT для таблиці `products`
-ALTER TABLE `products`
-  MODIFY `id_product` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID', AUTO_INCREMENT=19;
 
--- AUTO_INCREMENT для таблиці `product_category`
-ALTER TABLE `product_category`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+2)
+SELECT products.id_product, products.name FROM products </br>
+LEFT JOIN product_category ON product_category.product_id = products.id_product </br>
+WHERE product_category.category_id = '1' </br>
+UNION </br>
+SELECT products.id_product, products.name FROM products </br>
+LEFT JOIN product_category ON product_category.product_id = products.id_product </br>
+WHERE product_category.category_id IN(SELECT id_sub_category FROM sub_category WHERE parent_id= '1');</br>
+
+3)
+SELECT sub_category.name, COUNT(DISTINCT product_id) as products_count FROM product_category</br>
+LEFT JOIN sub_category ON product_category.category_id = sub_category.id_sub_category </br>
+WHERE sub_category.id_sub_category IN('2','3','5') GROUP BY name;</br>
+
+4)
+SELECT sub_category.name, COUNT(product_id) as products_count FROM product_category </br>
+LEFT JOIN sub_category ON product_category.category_id = sub_category.id_sub_category </br>
+WHERE sub_category.id_sub_category IN('2','3','1') GROUP BY name;</br>
